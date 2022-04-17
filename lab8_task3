@@ -1,0 +1,85 @@
+from PIL import Image, ImageDraw
+from lzw_realisation import encoding, decoding
+from arrays import Array2D
+
+class GIADT:
+
+    def __init__(self, image):
+        self.image = image
+        self.width = image.size[0]
+        self.height = image.size[1]
+
+    def GrayscaleImage(self, nrows, ncols):
+        new_image = Image.new('RGB', (nrows, ncols))
+        draw = ImageDraw.Draw(new_image)
+
+        for i in range(nrows):
+            for j in range(ncols):
+                draw.point((i, j), (0, 0, 0))
+        return GIADT(new_image)
+
+    def width(self):
+        return self.width
+
+    def height(self):
+        return self.height
+
+    def clear(self, value):
+        try:
+            pix = self.image.load()
+        except:
+            raise TypeError("Wrong image format")
+        draw = ImageDraw.Draw(self.image)
+        for i in range(self.width):
+            for j in range(self.height):
+                draw.point((i, j), (value, value, value))
+        self.image.show()
+
+    def getitem(self, row, col):
+        try:
+            pix = self.image.load()
+        except:
+            raise TypeError("wrong image format")
+        return pix[row, col]
+
+    def setitem(self, row, col, value):
+        draw = ImageDraw.Draw(self.image)
+        draw.point((row, col), (value, value, value))
+
+    @classmethod
+    def from_file(cls, path):
+        new_image = Image.open(path)
+        return GIADT(new_image)
+
+    def lzw_compression(self):
+        pix = self.image.load()
+        text = ''
+        for i in range(self.width):
+            for j in range(self.height):
+                text += str(pix[i, j][0]) + ' ' + str(pix[i, j][1]) + ' ' + str(pix[i, j][2]) + ' '
+        encoding(text, 'encode_image')
+    def lzw_decompression(self):
+        pix_string = decoding("encode_image")
+        pix_elem = pix_string.split()
+        pix = Array2D(self.width, self.height)
+        i = 0
+        j = 0
+        for elem in range(0, len(pix_elem) - 2, 3):
+            pix[i, j] = (int(pix_elem[elem]), int(pix_elem[elem + 1]), int(pix_elem[elem + 2]))
+            j += 1
+            if self.width == j:
+                j = 0
+                i += 1
+        draw = ImageDraw.Draw(self.image)
+        for i in range(self.width):
+            for j in range(self.height):
+                draw.point((i, j), (pix[i, j][0], pix[i, j][1], pix[i, j][2]))
+        self.image.show()
+        return pix
+
+
+
+image = Image.open(r"bad pablo.png")
+a = GIADT(image)
+a.lzw_compression()
+print(a.lzw_decompression())
